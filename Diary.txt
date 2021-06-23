@@ -1,0 +1,222 @@
+Creating a Django website
+*************************
+
+Setting up the project
+**********************
+-create the github repo:
+	echo "# Django_Website" >> README.md
+	git init
+	git add README.md
+	git commit -m "first commit"
+	git branch -M main
+	git remote add origin https://github.com/Robzabel/Django_Website.git
+	git push -u origin main
+	
+- Installed django
+	pipenv install django
+	
+-create a new Django project:
+	django-admin start project mysite
+	
+-The manage.py file is the brains ofthe project where we will orchestrate eveything that happens within the project.
+- We can test that the development server is working by changing into the project directory and typing:
+	python3 manage.py runserver (optionally specify the port number here)
+	
+-The outer folder is the root directory of the site and the inner folder is the project handling folder with the same name	
+- So far we have basically created an environment to host our web applications. We next need to start creating the applications.
+
+
+Creating applications and Directing Requests Using Urls
+*******************************************************
+- from the root directory, use the command:
+	python manage.py startapp main
+
+-In the main dir, you have the views file which is where you define the views(functions for each website page) for the application.
+- start by importing HTTP response from the django http library:
+	from django.http import HttpResponse
+
+- Next define the view(s) that you want. we are keeping it simple at the moment and just returning hello world.
+- once we have the views set up, we need to create a file in the app directory called urls.py. This URL's file will direct the http traffic around the application that it is stored in. Kind of like how in flask you have route decorators above each view to signify how to get to it, in Django the routes get separated into a different file.
+- firstly we need to import a few things:
+	from django.urls import path  #this is not the same as the standard path library
+	from . import views #this imports views from the same folder represented by the "."
+- we then need to create a list that contains the path to the function name which we defined within the views file:
+
+urlpatterns = [
+    path("", views.index, name="index"),
+]
+
+-So what we have stated here ^ is that there is a path to a view that we want to be named index. When a request is sent to "" direct it to the views file and the index function. the "" means that there is no matching criteria so if any web traffic comes this way and it is not going to any other specific path, send it here. 
+
+-now we need to go back to the project folder called "mysite" and open the urls.py file in there. because this urlsfile is from the project folder, it is addressed first when a request comes into the website, the file is then checked and the traffic is forwarded to the urls folder of the correct application which is specified in the urlpatterns list on this page.
+- This is because a project can have more than one application but the applications are programme agnostic which means they dont know about anything other than themselves so if traffic is not meant for them they would just drop it. The project urls file orchestrates where traffic should be sent as it has an overview of all paths possible from the web address.
+- we need to add a path to the url folder of our main application but first we need to add the import for include from the django.urls module.
+- we then use the include module when specifying a path in the urlpatterns list:
+	
+	
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include("main.urls")),
+]
+
+-This means that if nothing is typed as a url, hence the empty string, then the request will be forwarded to the main app and the urls file in which it will then be directed to the correcty place on the app.
+-whenever django encounters include(), it chops off whatever part of the URL matched up to that point and sends the remaining string to the included URLconf for further processing.
+-When to use include()? You should always use include() when you include other URL patterns. admin.site.urls is the only exception to this.
+	
+
+
+Setting up Databases
+********************
+-its a good idea to set up the database next before the web pages as it is the data from the datase that you want to access so you need to have something there to display first.
+-To include an application in the project we need to make it known in the main settings.py file. to do this, open up the file and scroll down to where it says installed apps, at the bottom of the list add the line:
+	
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'main.apps.MainConfig',
+]
+- this tells Django that in the main folder there is a file called apps and in that file you will find a class called MainConfig.This class is automatically created when setting up the app and is a combination of the app filename and Config so if i had called my app Rob for some reasn, the class would be called RobConfig and the line to add to the INSTALLED_APPS list would be:
+
+	'rob.apps.RobConfig',
+	
+- make sure to use single quotes and put a comma at the end for some reason.
+-Whenever we make a change to the installed apps list, we need to run the command:
+	
+	python manage.py migrate
+	
+-The migrate command looks at the INSTALLED_APPS setting and creates any necessary database tables according to the database settings in your mysite/settings.py file and the database migrations shipped with the app. You’ll see a message for each migration it applies. If you’re interested, run the command-line client for your database and type \dt (PostgreSQL), SHOW TABLES; (MariaDB, MySQL), .schema (SQLite), or SELECT TABLE_NAME FROM USER_TABLES; (Oracle) to display the tables Django created
+
+-next we need to define the models of the database. this is similar to the way we do it in Flask but slightly different.
+- Each class will be a subclass (inherit from) of django.db.models.model each filed is represented by an instance of the Model.Field() calss.
+- when specifying the models, Django does a lot of the relational database aspects for you:
+	*Table names are automatically generated by combining the name od the app andthe the lowercase name of the model(you can actually override this behaviour though)
+	*Primary key ID fields are added automatically, but you can override this too
+	*by convention, django adds _id to the end of the foreign key name, you can override this too
+	*The foreign key relationship is made explicit by a foreign key constraint, the DEFERRABLE keyword is used to tell PostgreSQL not to enforce the foreignkey until the end of the transaction.
+- When it comes to the databases, you can run "python manage.py check" which will check for any problems in the project without making migrations or touching the database.
+- You need to run migrate again to create model tables in the database.
+
+
+Creating Models
+***************
+- All models are clases that inherit from the models.Model class, just as Flask models inherit from the db.modles class.
+-when defining the colums of the model, you need to use the properties of the models superclass, each property is called a Field of some type such as the CharFileld which referrs to string datatype columns.
+- As with Flask, when you define a CharField (string valuse column) you need to give a character limit to the model below is an example:
+
+	class ToDoList(models.Model):
+	    name = models.CharField(max_length=200)
+	    
+- It is a good idea to define a __repr__ method as well so that the user can call it and quickly find a description of what the table is for. However, when using the API to work with the database, it doesnt understanf the repr method so we need to ass a string method of the same thing so that the API can work with it:
+		
+		
+- when declaring foreign Key columns, you simply make a column then define it as a ForeignKey type and provide the the table that you want to link to not the colum which feels wierd but django creates the ID fields on each table automatically and behind the scenes, it will add the _id tag to the table then it knows to use the ID column as the primary key.
+- When you make the primary key field, you also need to specify what to do when an item from the table that it is linked to, is deleted as in if you had a users table and a blog table, you would set a foreign key on the blog table pointing back to the users table as a user creates a blog. If a user is deleted, you dont want their blogs to be kept as it is redundant data. This is why you need to specify that when you delete an Item in the table that holds the foreign key, you want it to CASCADE down to the other table and remove any data that it is associated with there.
+
+	 class Item(models.Model):
+   	 todolist = models.ForeignKey(ToDoList, on_delete=models.CASCADE)
+	    
+-now that we have made the tables, we need to run a command that does the same thing as staging in Git when you use the git add filename. We will stage the changes to the django app first then commit them with the migrate conmmand
+
+	python manage.py makemigrations (app name)
+- you should get the following output:
+	
+	Migrations for 'main':
+  	main/migrations/0001_initial.py
+	    - Create model ToDoList
+	    - Create model Item
+-NOw we need to comit the changes:
+
+	python manage.py migrate    
+	   
+- we should get a confirmation message in the terminal and if you look in the migerations afile under the dir of the application, you will see the changes in a file. every time you make changes they are recorded here so you can roll back if you fuck somethiong up, which is nice.
+
+
+Adding Data to Models
+*********************
+-Now that we have the database and the models created, we need to start adding data to them. 
+-We can do this using the API that is created for us by django. Get into an interactive shell by typing in a terminal:
+	
+	python manage.py shell
+	
+-We’re using this instead of simply typing “python”, because manage.py sets the DJANGO_SETTINGS_MODULE environment variable, which gives Django the Python import path to your mysite/settings.py file.
+-first we need to import our models as we are in the mysite directory so it wont know what we are talking about:
+	
+	from main.models import Item, ToDoList	    
+
+-from here we create an object of the todolist and give it a name peramater. we then add the object to the database by using the .save() method on it:
+
+	
+	>>> to_do = ToDoList(name="Robs Todo")
+	>>> to_do.save()
+
+-We can get all the elements from a table by calling the objects.all() method on the name of the table, so in this case i would use:
+	
+	>>> ToDoList.objects.all()
+	<QuerySet [<Todo Name: Robs Todo>]>
+
+-We can also retrieve different objects through filteing the request:
+
+	>>> ToDoList.objects.get(id=1)
+	<Todo Name: Robs Todo>
+
+- when we created the foreign key relationshiop from the Items table to the todolist table, behind the scenes, django creates a set which is used to hold "the other side" of a foreign key's relationship. what this means is, because Items has a foreign key linking it to the todolist table, there will be a method called items_set which we can use on the todolist object and pass the field information as paramaters. This is then entered into the Items table:
+	
+	to_do.item_set.all() #this will retrieve all the information from the Items table
+	to_do.item_set.create(text="Go shopping", complete=False)
+	
+
+Show to do lists on the website
+********************************
+-in the application's URLs.py file we can change the path to look for dynamic input. What this basically means is going back to where you use <int:id> int the path so that a user can pass a value to the web address and we can return the corresponding to do list.
+-where we had previously written "" to catch any traffic going to the site, add the <int:id> tag.
+	    
+	urlpatterns = [
+	path("<int:id>", views.index, name="index"),
+	]
+	    
+- Now we can go to our apps Views.py file and change the index function to accept a parameter for ID so we can use it to query the DB.
+
+	def index(response, id):
+	    get_list = ToDoList.objects.get(id=id)
+	    return HttpResponse(f"<h1>The name of the to do list is {get_list.name} </h1>")
+
+- Now when we go to the utl of http://127.0.0.1/8000/1 we get teh message followed by the database item.
+
+	    
+	    
+	    
+	    onto vid 3
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

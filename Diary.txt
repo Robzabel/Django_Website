@@ -36,6 +36,16 @@ Creating applications and Directing Requests Using Urls
 	from django.http import HttpResponse
 
 - Next define the view(s) that you want. we are keeping it simple at the moment and just returning hello world.
+- When writing the view function we need to accept an argument which is normally called request or response. the function must always return a response, wheather that is using the httpresponse module or simply returning the Request/response peramaters that were supplied. Here we have an example of each instance:
+
+
+	def index(response, id):
+   	   return HttpResponse("<h1> hello world</h1>") # this uses httpresponse so doesnt need to return the 	response argument passesd to it
+
+
+	def home(response):
+    	   return render( response,  "main/home.html") #this uses the render module so needs to return the response argument passed to it
+
 - once we have the views set up, we need to create a file in the app directory called urls.py. This URL's file will direct the http traffic around the application that it is stored in. Kind of like how in flask you have route decorators above each view to signify how to get to it, in Django the routes get separated into a different file.
 - firstly we need to import a few things:
 	from django.urls import path  #this is not the same as the standard path library
@@ -167,7 +177,15 @@ Adding Data to Models
 	
 	to_do.item_set.all() #this will retrieve all the information from the Items table
 	to_do.item_set.create(text="Go shopping", complete=False)
-	
+
+- We can get specific information from the tables by using filtering statements:
+	t = ToDoList.objects
+	t.filter() #need to apass filter arguments to the function
+-Filter arguments normally start with a double underscore. An example would be __startswith = ""
+- to delete items from a table, you need to make an object of the item then call the delete method on it:
+	del_object = t.get(id=1)
+	del_object.delete()
+
 
 Show to do lists on the website
 ********************************
@@ -186,34 +204,84 @@ Show to do lists on the website
 
 - Now when we go to the utl of http://127.0.0.1/8000/1 we get teh message followed by the database item.
 
-	    
-	    
-	    
-	    onto vid 3
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
+
+Admin Dashboard
+****************
+- THe Django admin dashboard can be accesses by going to the page in a browser with the /admin extension.
+-This takes us to a log in page. We need to create the admin user and define the credentials before we log in. To do this, go to the terminal of the project and type:
+
+	python manage.py createsuperuser
+
+- This takes you to a guided menu where you create the admin credentials
+email
+Password123!    
+- From the admin panel you can control the data in the databases. Our database that we created doesnt show up here yet because we need to allow the newly created admin access to it.
+- go to the admin.py file in the main application folder. first we meed to import our database models into the folder, since the Items table is linked to the todolist table, we only need to give access to the TDlist table:
+
+	from .models import ToDoList
+
+- next we need to add the line below to register the table with the admins access rights:
+	
+	admin.site.register(ToDoList)
 
 
+Creating Templates for the Website
+***********************************
+-To create more views and make the app start looking like a website, first we need to set a url to get to the view we are going to create. in the URLS file of the application, add a new pattern:
+
+	path("", views.home, name="home")
+
+- now we need to go to the views file and add a function called home. for now we will just write it as a pass function because we want to start designing the templates first.
+- int the main file make a folder called templates, then in that file make another file called main. this is becasue Django will look in the templates file for a folderthe same name as the application so that it can pull the correct templates.
+-start off by making a base template by opening a new file nad using the ! to make a standard HTML base file. we then want to create a home file which will contain the formatting for the home page that will run over the base template.
+- in the home file, we will be using Jinja2 just like in flask so we need to use the syntax to extend the base page:
+	
+	{% extends 'main/base.html'%}	    
+
+- next, on the base template we need to set up our content block so go to the body tags on base,html and create a new div that contains the jinja syntax:
+
+	 <body>
+    		<div id="content", name="content">
+        		{% block content %}
+        		{% end block %}
+   		 </div>
+	 </body>
+- then in the home template, you need to put the home specific content within the content block syntax as well:
+
+{% block content %}
+<h1>Hello Rob, this the home page</h1>
+{% endblock %}    
+
+- we also can add the block title to the base template which can let us change the title of each page.
+- now that we are creating templates for the pages of the website we need to use the render method of retunring the page in the views file. we can also pass variables to the page the same way we do in flask, however we need to pass them in a dictionary format for some reason:
+	
+def index(response, id):
+    ls = ToDoList.objects.get(id=id)
+    return render(response, 'main/list.html', {"ls": ls})
+
+- now that we are returning a to do list to our page, we can write a for loop in jinja to loop through the items associated with the list:
+
+{% block content %}
+    <h1>{{ ls.name }}</h1>
+    <ul>
+        {% for item in ls.item_set.all %}
+            <li>{{ item.text }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
 
 
+- just need to add some items to the list:
+
+	python manage.py shell
+	ls1 = ToDoList.objects.get(id=1)
+	ls1.item_set.create(text="first Item", complete=False)
+	ls1.item_set.create(text="Second Item", complete=False)
+	ls1.item_set.create(text="Third Item", complete=False)
+	quit()
 
 
-
-
-
-
-
-
-
-
+vid 3 23:30
 
 
 

@@ -1,7 +1,15 @@
 from django.shortcuts import render
-from django.http import HttpResponse
 from .models import ToDoList, Item
+from django.http import HttpResponse
+
+"""def index(response, id):
+    return HttpResponse("<h1> hello world</h1>") # this uses httpresponse so doesnt need to return the response argument passesd to it
+"""
+
+def home(response):
+    return render( response,  "main/home.html", {}) #this uses the render module so needs to return the response argument passed to it
+
 
 def index(response, id):
-    get_list = ToDoList.objects.get(id=id)
-    return HttpResponse(f"<h1>The name of the to do list is {get_list.name} </h1>")
+    ls = ToDoList.objects.get(id=id)
+    return render(response, 'main/list.html', {"ls": ls})

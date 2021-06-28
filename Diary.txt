@@ -281,7 +281,71 @@ def index(response, id):
 	quit()
 
 
-vid 3 23:30
+Simple Forms
+*************
+- Start by making a new URL mapping in the URLs.py file called create. This will be the view that takes users to a form that will input data into the database. Add the following line to the urlpatterns list:
+	
+	path("create/", views.create, name="create")
+- Next go to the views file and create a new view that renders the create,html file.
+-Next, make the create.html file by inheriting from the base.html file and addin content &title blocks.
+-Django will actually take all the hastle out of creating a form. all we need to do is create the HTML form using the <form> tags and add a submit button. After that we add the {{ form }} variable and django does the rest.
+
+	{% block content %}
+    		<form method="post" action=#>
+        		{{ form }}
+        		<button type="submit", name="save" >Create New</button>
+    		</form>
+	{% endblock %}
+
+-We need to create a new file to hold the forms in the application main directory. forms.py
+
+- In the forms file, we import the forms module from django
+	
+	from django impoprt forms
+
+-Create a class called whatever you want the name of your form to be and inherit from the forms.Form class. (make sure the Form has a capital F.
+-We need to make the fields of the form the same as the rovs of the models so that they can obviously hold the exact same type of data. You declare the fields of the form in almost the exact same way you declare the fields of the model using inherited class method with capital letters:
+	
+	class Create_new_list(forms.Form):
+		name = forms.CharField(max_length=300, label="name") #label is the form placeholder
+		check = forms.BooleanField()
+- You can now reload the webserver and when you visit the site, the forms page will be displaying a nice little formatted form.
+- You can add extensions to the {{ form }} tag to change the basic default layout of the form. For this instance i am using the {{ form.as_p }}format which shows the form item fields under one another.
+	
+vid 4 9.32
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
 
 
 

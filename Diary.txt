@@ -304,15 +304,99 @@ Simple Forms
 	from django impoprt forms
 
 -Create a class called whatever you want the name of your form to be and inherit from the forms.Form class. (make sure the Form has a capital F.
--We need to make the fields of the form the same as the rovs of the models so that they can obviously hold the exact same type of data. You declare the fields of the form in almost the exact same way you declare the fields of the model using inherited class method with capital letters:
+-We need to make the fields of the form the same as the rows of the models so that they can obviously hold the exact same type of data. You declare the fields of the form in almost the exact same way you declare the fields of the model using inherited class method with capital letters:
 	
 	class Create_new_list(forms.Form):
 		name = forms.CharField(max_length=300, label="name") #label is the form placeholder
 		check = forms.BooleanField()
 - You can now reload the webserver and when you visit the site, the forms page will be displaying a nice little formatted form.
 - You can add extensions to the {{ form }} tag to change the basic default layout of the form. For this instance i am using the {{ form.as_p }}format which shows the form item fields under one another.
+- you can see that Django automatically adds JavaScript to flash an alert if you try clicking submit without fillin in the form, this is a nice touch but at the same time we need to be aware that if we dont specify things as optional, the JS wont let the user proceed without completing the all parts of the form. For instance the complete radio button, if it it clicked then the todo is marked as complete but without specifying that it is optional, the JS wont let the user create the todo until it is clicked.
+- To make form elements optional, we can use the required = False line inside the parenthesis:
 	
-vid 4 9.32
+	check = forms.BooleanField(required=False)
+
+- now we can submit the form without having to click the complete radio button. However if we do submit the form at the moment, we get a CRSF error. This is a security error and is brought up becasue whenever we create a form in django, we need to specify a crsf token to go with it. To do this we need to add the jinja tag inside the form tag on the html document as follows:
+
+	{% block content %}
+	<h1> Create New List</h1>
+	    <form method="post" action=#>
+		{% csrf_token %}
+		{{ form.as_p }}
+		<button type="submit", name="save" >Create New</button>
+	    </form>
+	{% endblock %}
+
+- The difference between post and aget is that get is sent in plain test through the url whereas post is hidden fronm the URL bar and is sent encrypted. with Django, the response argument that is passed to all view functions is able to tell whether a post or get request was sent.
+- TO access the data that is sent in the post request we first need an if statement to check if it was a GET/POST request that the view recieved and if it was POST, we need to validate the data then add it to the database:
+
+	def create(response):
+	    if response.method == "POST":
+		form = Create_new_list(response.POST) #take the data from the POST request and add it to the form
+
+		if form.is_valid(): #validate the form data received in the POST request
+		    n = form.cleaned_data["name"]#clean the data and grab the name value
+		    t = ToDoList(name=n) #pass the name to the list argument
+		    t.save() #save the new to do list to the database
+		    
+	    else:
+		form = Create_new_list()
+		return render( response, "main/create.html", {"form":form})
+
+
+
+*response.POST is a dictionary-like object that lets you access submitted data by key name. In this case, response.POST['choice'] returns the ID of the selected choice, as a string. response.POST values are always strings.
+*Note that Django also provides response.GET for accessing GET data in the same way – but we’re explicitly using response.POST in our code, to ensure that data is only altered via a POST call.
+*Form.is_valid() runs a validation check by matching the data recieved with the constraints of the form.
+*Form.cleaned_data¶
+Each field in a Form class is responsible not only for validating data, but also for “cleaning” it – normalizing it to a consistent format. This is a nice feature, because it allows data for a particular field to be input in a variety of ways, always resulting in consistent output.
+For example, DateField normalizes input into a Python datetime.date object. Regardless of whether you pass it a string in the format '1994-07-15', a datetime.date object, or a number of other formats, DateField will always normalize it to a datetime.date object as long as it’s valid.
+Once you’ve created a Form instance with a set of data and validated it, you can access the clean data via its cleaned_data attribute:
+
+- Now that we are able to add new to do lists, to make it do that the user is aware the list was created, We need to redirect them to a page that displays it. To do this, first we need to import the HTTPResponseRedirect module from django.http:
+
+	from django.http import HttpResponseRedirect
+	
+- next we add a return statement to the view function inside the if block that catches POST requests:
+	
+	return HttpResponseRedirect("/%i" %t.id)
+	
+- this redirects the user to the index page/ the id of the list which is pretty clever.
+
+
+
+Custom Forms
+************
+- Now that we have seen what Django can do by default, we will make some customisations to our list template using forms to retrieve data.
+-Our list page prints the items of the todo list but currently, we have no means of adding new items to the lists or updating them. here is where the custom form comes into play. I will make the current content block into a POST form and add buttons to add and update the lists, we can then capture the user input in the same way we did with the form to create the lists.
+- we have made two buttons (save and newItem) so we need a way to determine which one was clicked to send the from.
+- The code from this section has nothing new just stuff very specific to this project so check the code for examples on what we did.
+
+
+Adding a Side Bar
+*****************
+-The backend is pretty much finished now so it is going to be focusing more of front end from here.
+-We need to work on the base template for the html to carry over into the other templates.
+
+vid 7 2.12
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-
+
 
 
 

@@ -1,6 +1,7 @@
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
 from .models import ToDoList, Item
-from django.http import HttpResponse#
+from django.http import HttpResponseRedirect
 from .forms import Create_new_list
 
 """def index(response, id):
@@ -17,5 +18,16 @@ def index(response, id):
 
 
 def create(response):
-    form = Create_new_list()
+    if response.method == "POST":
+        form = Create_new_list(response.POST) #take the data from the POST request and add it to the form
+
+        if form.is_valid(): #validate the form data received in the POST request
+            n = form.cleaned_data["name"]#clean the data and grab the name value
+            t = ToDoList(name=n) #pass the name to the list argument
+            t.save() #save the new to do list to the database
+
+        return HttpResponseRedirect("/%i" %t.id) #redirect to the todo list page
+
+    else:
+        form = Create_new_list()
     return render( response, "main/create.html", {"form":form})

@@ -567,8 +567,9 @@ Got messy towards the end.
 Stuff to tidy up
 *****************
 -get rid of home page
-- make it so you can only login or register efore signing in
+-make it so you can only login or register efore signing in
 -add a logout page
+-remove second base template and make sure all authentication is handled before allowing the user into their lists
 
 
 

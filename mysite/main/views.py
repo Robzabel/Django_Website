@@ -14,22 +14,26 @@ def home(response):
 
 def index(response, id):
     ls = ToDoList.objects.get(id=id)
-    if response.method == "POST":
-        if response.POST.get("save"):
-            for item in ls.item_set.all():
-                if response.POST.get("c"+str(item.id)) == "clicked":
-                    item.complete = True
-                else:
-                    item.complete = False
-                item.save()
-        elif response.POST.get("newItem"):
-            text = response.POST.get("newI")
 
-            if len(text) > 2:
-                ls.item_set.create(text = text, complete=False)
-               
-    return render(response, 'main/list.html', {"ls": ls})
+    if ls in response.user.todolist.all():
+        
+        if response.method == "POST":
+            if response.POST.get("save"):
+                for item in ls.item_set.all():
+                    if response.POST.get("c"+str(item.id)) == "clicked":
+                        item.complete = True
+                    else:
+                        item.complete = False
+                    item.save()
+            elif response.POST.get("newItem"):
+                text = response.POST.get("newI")
 
+                if len(text) > 2:
+                    ls.item_set.create(text = text, complete=False)
+                
+        return render(response, 'main/list.html', {"ls": ls})
+    else:
+        return render(response, 'main/view.html', {})
 
 def create(response):
     if response.method == "POST":
@@ -37,11 +41,16 @@ def create(response):
 
         if form.is_valid(): #validate the form data received in the POST request
             n = form.cleaned_data["name"]#clean the data and grab the name value
-            t = ToDoList(name=n) #pass the name to the list argument
-            t.save() #save the new to do list to the database
+            t = ToDoList(name=n)
+            t.save()
+            response.user.todolist.add(t)
 
         return HttpResponseRedirect("/%i" %t.id) #redirect to the todo list page
 
     else:
         form = Create_new_list()
     return render( response, "main/create.html", {"form":form})
+
+
+def view(response):
+    return render(response, "main/view.html", {})

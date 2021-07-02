@@ -395,6 +395,9 @@ Urser Registration and Sign Up Page
 	
 	python manage.py startapp register
 
+-after creating the app we need to add it to the list of installed apps in the settings.py file of the project folder:
+	'register.apps.RegisterConfig'
+
 -Now that we have the new app, go to the views file and add a simple view for now just so that we can sort out the url mappings from the project file:
 	
 	def register(response):
@@ -430,7 +433,142 @@ urlpatterns = [
     		form = UserCreationForm
     		return render(response, "register/register.html", {"form":form})
 	
+-right now the register page can be reached and the default Django register form can be seen, however , the functionality is not there at the moment so if you fill out the form and submit it, it will error because we have not told Django what to do withthe form at this time.
+- we need to implement the functionality inside the view function the same way we did with the create form, through if statements:
 
+def register(response):
+    if response.method == "POST":
+        form = UserCreationForm(response.POST)
+        if form.is_valid():
+            form.save()
+    else:
+        form = UserCreationForm
+
+    return render(response, "register/register.html", {"form":form})
+
+- this works well and the new users are created automatically in the users table of the database. 
+-now we want to redirect users to another page once they sign up. start by importing redirect from the django short cuts library and then redirect them to the gome page after successful registration.
+- since the default django form doesnt ask for email address or phone number, we wnat to change that. in the register application, create a new file called forms.py and import the following again:
+
+from django import forms
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+
+- this gets a bit wierd so hold on tight:
+-create a class called RegisterForm that inherits from the default django UserCreationForm that we just used. this gives us all the properties of the default form and gives us the nice layout as well.
+-we create an email property using the django forms email field. here is where you can create any fields that you want on your custom form.
+-within the class, we make another class which needs to be called Meta. This class will take the data from the RegisterForm and tell it where to be saved in the users database. for this to work we need the default django models (database tables) which we import above and specifically from the django models we want the User table.
+-so in the Meta class we specify that the model is User and we provide the fields information in the order that we want it to be displayed in.
+- Note that the username,password1 and password2 are alredy default fields of the form, we are only adding the email field but we then select the order we want them to be displayed in.
+
+
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField()
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password1", "password2"]
+
+-Now that we have acutally created our own form, we can go back to the register view and change the references to the django default form to the nice one we just created/
+-first remove the unnecessary defauolt django form imports and then imoport the class we just made
+
+	from .forms import RegisterForms
+-Now replace references to the old form in the if statements with the new form.
+
+
+Styling the registration form
+*****************************
+- we are going to use a popular framework for Django forms called Crispy forms so install it into the virtual env with:
+	
+	pipenv install django-crispy-forms
+
+-Before we can start using crispy forms, we need to go in to the project settings. In the installed apps list add 'crispy_forms', then at the very bottom of the page, add the line:
+	
+	CRISPY_TEMPLATE_PACK = "bootstrap4"
+-this tells the framework to use the bootstrap 5 templates, as it uses version 2 by default.
+-Next we go to the register template, just above the {%block content%} line we need to add the tag to bring the crispy forms into the mix:
+
+	{% load crispy_forms_tags %}
+
+- then we need to change the tag that brings through the form to include the crispy filter:
+
+	 {{ form|crispy }}
+
+
+
+Login Logout Pages
+******************
+-Thankfully Django does most of the heavy lifting on this one. the django.contrib.auth library is the boy which sorts us out form all the authentication shit.
+-Start out in the project URLS page. in here we need to add a path to the contrib.auth application urls file which we can then in turn redirect to the default log in/out pages. so add the line below to the URL pattern list:
+	
+	    path('', include('django.contrib.auth.urls')),
+
+-Next we need to create a new folder in the register application templates file which will hold the log in/out pages so create a folder inside the templates folder called registration.
+- we then create a new html file called login.html this is where django will look to render our login page.
+-create the html file just like the others with a form and stuff:
+
+{% extends "main/base.html" %}
+{% block title %}
+Login Page
+{% endblock %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <form method="post" class="form-group">
+        {% csrf_token %}
+        {{form|crispy}}
+        <br>
+        <button type="submit" name="login" class="btn btn-success">Login</button>
+        <p>or click <a href="/register">here</a> to create an account</p>
+    </form>
+{% endblock %}
+
+-now when we navigate to /login we can see the nice login page. This page is not quite functional yet as we need to add a redirect which takes place on successful logins. Unsuccessful logins are dealt with through JavaScript banners.
+-to specify the login redirect, we need to go to the main settings file again, then at the very bottom andd the line below:
+
+	LOGIN_REDIRECT_URL="/"
+- this will now redirect successful logins to the home page.
+
+
+User Authentication
+*******************
+- Whenever you go to a page in Django, it has a user attirbute that holds the current user. if you are not signed in, the user variable is classed as anonymous.
+- we can use this user variable to check if a user has signed in or not and prevent them from accessing parts of the site accordingly.
+-to do this, go to the base template and just before we have the block content, add the jinja if statement to check if  the user is authenticated:
+	
+	{% if user.is_authenticated %}
+
+-I actually had to create an new base template in the registration app and remove the authentication block otherwise you cnnot get to the login page to log in lol if you were doing this professionally. you can access the user variable from the vview functions so you caould add a block of code in each view that checks if a user is authenticated per view, this way you can use the same base template for all pages.
+- to change the logout page layout, go to the project settings file again and unfer the the login redirect line that we just wrote, add the same thing but change it to logout:
+
+	LOGOUT_REDIRECT_URL = "/"
+
+-Now that we can tell who is logged in, we can make it so that a user can see only their to do list and no one elses.
+- to make this happen, we need to go to the main app's models file and add a foreign key to the todolist model which links to the django.contrib.auth user table(model).
+-so first import the contrib User model:
+
+	from django.contrib.auth.models import User
+
+-then under the ToDoList model add the foreign key field:
+
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+- as we have been messing with the database models, we need to make migrations so that it is saved:
+	
+	python manage.py makemigrations
+	python manage.py migrate
+-now that we have added a foreign key to the to do table, we need to add a bit of code so that when we create a todo list, it checks which user is logged in then adds those details to the database entry.
+- go to the main app's views.py file
+
+Got messy towards the end.
+
+Stuff to tidy up
+*****************
+-get rid of home page
+- make it so you can only login or register efore signing in
+-add a logout page
 
 
 

@@ -3,7 +3,9 @@
 {% block title %}Create New List {% endblock %}
 
 {% block content %}
-<h3>Create a new To Do List</h3>
+<h1 class="mt-2">Create List</h1>
+<hr class="mt-0 mb-4">
+<h3>Add a new To Do List</h3>
 <br>
 <form method="post" action="/create/" class="form-group">
     {% csrf_token %}

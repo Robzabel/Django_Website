@@ -5,7 +5,8 @@ List Page
 
 
 {% block content %}
-    <h1>{{ ls.name }}</h1> 
+    <h1 class="mt-2">{{ls.name}}</h1>
+    <hr class="mt-0 mb-4">
     <form method="post", action ="#">
         {% csrf_token %}
         {% for item in ls.item_set.all %}

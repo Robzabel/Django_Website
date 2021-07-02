@@ -377,14 +377,59 @@ Adding a Side Bar
 *****************
 -The backend is pretty much finished now so it is going to be focusing more of front end from here.
 -We need to work on the base template for the html to carry over into the other templates.
-
-vid 7 2.12
-
-
-
+-ON the base template add a div with the class name of Sidenav, then add a few links (a href tags).
+- we will start by using CSS on the side nav. remember that a full stop represents a class when calling html elements with CSS so to referr to the nav bar which we have given the class of sidenav, we would write .sidenav if you were calling based on ID then you use the hashtag.
+-next i just added the CSS that was written on the site.
 
 
+Adding Bootstrap
+****************
+-bootstrap was atraight forward, just go to the website and copy the shit to your page then style it the way you want.
 
+
+Urser Registration and Sign Up Page
+***********************************
+- the first thing we will need to do is create a new application in the Django project that will handle the user athentication login/logout actions.
+- We can actually use this user authentication apllication in other Django projects simply by copy and pasting it which is very handy.
+-to create the new application, go the command line and type:
+	
+	python manage.py startapp register
+
+-Now that we have the new app, go to the views file and add a simple view for now just so that we can sort out the url mappings from the project file:
+	
+	def register(response):
+		return render
+
+
+-we need to add our new view to our URLs patern list so that it can be accessed. In the "mysite" folder which is the folder that handles everything to do with the project, go to the urls file. make sure this is not just the "main" application's urls file.
+-In the file it is a bit different than when we added the url pattern for the main application. because we dont want to direct the traffic to the urls file of the register application, since we only have 1 view, we need to import the view in the file and forward traffic directly to it:
+
+	from register import views as regView
+
+- the resason we have imported it as regView is because if this was a big project with lots of different apps, you would be importing lots of views files and it wouldnt work if you imported them all as "views" so we changethe name to keep it organised and so that we can import other view files in the future.
+- Next we add the path to the urlpattern list:
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('register/', regView.register, name="register"),
+    path('', include("main.urls")),
+]
+
+-now that we have linked the url to the view we need to create a template page. so in the register folder, create another folder called templates then in that folder create a file called register.html.
+- Same chat as last time for the template but this time we need to specify a relative path to the base template since it is held in the main applications templates folder:
+	
+	{% extends "main/base.html" %}
+
+-inside the block content we basically just make another form similar to how we made the create form earlier.
+-Django automatically makes a form for registering/logging in/logging out which is can be used by importing the inbuilt modules, in the views file for the register app, import the modules and return the form to the page:
+	
+	from django.contrib.auth import login, authenticate
+	from django.contrib.auth.forms import UserCreationForm
+
+	def register(response):
+    		form = UserCreationForm
+    		return render(response, "register/register.html", {"form":form})
+	
 
 
 

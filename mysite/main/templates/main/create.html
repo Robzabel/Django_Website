@@ -3,10 +3,15 @@
 {% block title %}Create New List {% endblock %}
 
 {% block content %}
-<h1> Create New List</h1>
-    <form method="post" action="/create/">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit", name="save" >Create New</button>
-    </form>
+<h3>Create a new To Do List</h3>
+<br>
+<form method="post" action="/create/" class="form-group">
+    {% csrf_token %}
+    <div class="input-group">
+        <div class="input-group-text" id="btnGroupAddon2">
+            <button type="submit" name="save" class="btn btn-success">Create List</button>
+            {{ form.name }}
+        </div>
+    </div>
+</form>
 {% endblock %}

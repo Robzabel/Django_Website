@@ -19,9 +19,12 @@ from django.urls import path, include
 from register import views as regView
 
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('register/', regView.register, name="register"),
-    path('', include("main.urls")),
+    path('', regView.register, name="register"),
     path('', include('django.contrib.auth.urls')),
+    path('', include("main.urls")),
+    
 ]

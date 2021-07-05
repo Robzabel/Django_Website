@@ -37,20 +37,23 @@
 </head>
 <body>
     <div class="sidenav">
-        <a href="/">Home</a>
+        {% if user.is_authenticated %}
         <a href="/create">Create</a>
         <a href="/view">View Lists</a>
+        <a href="/logout">Logout</a>
+        {% else %}
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+        {% endif %}
     </div>
     <div class="main">
         <div class="row justify-content-center">
             <div class="col-8">
 
-                {% if user.is_authenticated %}
+
                     {% block content %}
                     {% endblock %}
-                {% else %}
-                    <p>You are not authenticated. Click <a href="/login">Here</a> to Login</p>
-                {% endif %}
+
             </div>
         </div>
     </div>
